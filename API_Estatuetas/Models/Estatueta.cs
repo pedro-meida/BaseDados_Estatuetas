@@ -6,7 +6,6 @@
         public string Titulo { get; set; }
         public string Descricao { get; set; }
         public decimal Preco { get; set; }
-        public DateTime DataCriacao { get; set; }
         public ICollection<Fotografia>? ListaFotos { get; set; }
     }
 }
