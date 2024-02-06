@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace API_Estatuetas.Models
 {
@@ -8,26 +9,21 @@ namespace API_Estatuetas.Models
         public int Id { get; set; }
 
         ///<summary>
-        ///Nome do documento com a fotografia da pessoa
+        /// Nome do documento com a fotografia da pessoa
         /// </summary> 
         public string NomeFicheiro { get; set; }
 
         ///<summary>
-        ///Data em que a fotografia foi tirada
+        /// Data em que a fotografia foi tirada
         /// </summary>
-
         public DateTime Data { get; set; }
 
         /**********************************************************/
 
         ///<summary>
-        ///FK para identificar a Fotografia da Estatueta que pertence
+        /// Navegação para identificar a Estatueta a que a fotografia pertence
         /// </summary>
-        [ForeignKey(nameof(Estatueta))]
-
-        public int? EstatuetaFK { get; set; }
-
+        [JsonIgnore]
         public Estatueta Estatueta { get; set; }
-
     }
 }

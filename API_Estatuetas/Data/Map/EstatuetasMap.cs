@@ -8,24 +8,29 @@ namespace API_Estatuetas.Data.Map
     {
         public void Configure(EntityTypeBuilder<Estatueta> builder)
         {
+            // Configuração da chave primária
             builder.HasKey(x => x.EstatuetaID);
 
+            // Configuração do título
             builder.Property(x => x.Titulo)
-                .IsRequired()
-                .HasMaxLength(70);
+                .HasMaxLength(70)
+                .IsRequired();
 
+            // Configuração da descrição
             builder.Property(x => x.Descricao)
-                .IsRequired()
-                .HasMaxLength(1000);
+                .HasMaxLength(1000)
+                .IsRequired();
 
+            // Configuração do preço
             builder.Property(x => x.Preco)
-                .IsRequired()
-                .HasColumnType("decimal(18,2)");
+                .HasColumnType("decimal(18,2)")
+                .IsRequired();
 
+            // Configuração da relação com ListaFotos
             builder.HasMany(e => e.ListaFotos)
-                .WithOne()
-                .HasForeignKey(f => f.EstatuetaFK)
-                .OnDelete(DeleteBehavior.Cascade);
+                .WithOne(f => f.Estatueta);
+           
+            //builder.Navigation(x => x.ListaFotos).UsePropertyAccessMode(PropertyAccessMode.Property);
         }
     }
 }

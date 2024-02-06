@@ -10,6 +10,9 @@ using Microsoft.Extensions.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configuração do serviço de logging
+builder.Services.AddLogging();
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -27,6 +30,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// Adiciona um middleware para tratamento de exceções globalmente
+app.UseExceptionHandler("/error");
 
 app.UseHttpsRedirection();
 app.UseAuthorization();
