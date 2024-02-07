@@ -1,8 +1,11 @@
 ﻿using API_Estatuetas.Dtos;
 using API_Estatuetas.Models;
 using API_Estatuetas.Repositories.Interfaces;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -14,10 +17,12 @@ namespace API_Estatuetas.Controllers
     public class EstatuetaController : ControllerBase
     {
         private readonly IEstatuetaRepository _estatuetaRepository;
+        private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public EstatuetaController(IEstatuetaRepository estatuetaRepository)
+        public EstatuetaController(IEstatuetaRepository estatuetaRepository, IWebHostEnvironment webHostEnvironment)
         {
             _estatuetaRepository = estatuetaRepository;
+            _webHostEnvironment = webHostEnvironment;
         }
 
         // Obtém todas as estatuetas
@@ -52,7 +57,6 @@ namespace API_Estatuetas.Controllers
             }
         }
 
-        // Registra uma nova estatueta com fotos
         [HttpPost]
         public async Task<IActionResult> AdicionarEstatuetaComFotos([FromForm] CriarEstatuetaDto dto)
         {
@@ -61,30 +65,40 @@ namespace API_Estatuetas.Controllers
                 return BadRequest(ModelState);
             }
 
-            Estatueta novaEstatueta = new Estatueta
+            var novaEstatueta = new Estatueta
             {
                 Titulo = dto.Titulo,
                 Descricao = dto.Descricao,
                 Preco = dto.Preco
             };
 
-            foreach (var foto in dto.Fotos)
+            try
             {
-                novaEstatueta.ListaFotos.Add(new Fotografia
+                foreach (var foto in dto.Fotos)
                 {
-                    NomeFicheiro = foto.FileName,
-                    Data = DateTime.Now
-                });
+                    // Adiciona a nova foto à estatueta
+                    string nomeFoto = await _estatuetaRepository.SalvarImagemLocal(foto);
+
+                    novaEstatueta.ListaFotos.Add(new Fotografia
+                    {
+                        NomeFicheiro = nomeFoto,
+                        Data = DateTime.Now
+                    });
+                }
+
+                await _estatuetaRepository.Add(novaEstatueta);
+
+                return Ok(novaEstatueta);
             }
-
-            await _estatuetaRepository.Add(novaEstatueta);
-
-            return Ok(novaEstatueta);
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Erro ao adicionar estatueta: {ex.Message}");
+            }
         }
 
         // Adiciona uma nova foto a uma estatueta existente
         [HttpPost("{idEstatueta}/fotos")]
-        public async Task<IActionResult> AdicionarFoto(int idEstatueta, [FromForm] IFormFile foto)
+        public async Task<IActionResult> AdicionarFoto(int idEstatueta, IFormFile foto)
         {
             try
             {
@@ -126,11 +140,11 @@ namespace API_Estatuetas.Controllers
 
         // Atualiza os dados de uma estatueta existente
         [HttpPut("{id}")]
-        public async Task<IActionResult> AtualizarEstatueta(int id, [FromBody] Estatueta estatueta)
+        public async Task<IActionResult> AtualizarEstatueta(int id, string titulo, string descricao , decimal preco)
         {
             try
             {
-                Estatueta estatuetaAtualizada = await _estatuetaRepository.UpdateDadosEstatueta(estatueta, id);
+                Estatueta estatuetaAtualizada = await _estatuetaRepository.UpdateDadosEstatueta(id , titulo, descricao, preco);
                 if (estatuetaAtualizada == null)
                 {
                     return NotFound("Estatueta não encontrada");

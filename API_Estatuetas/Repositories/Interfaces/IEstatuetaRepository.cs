@@ -32,7 +32,7 @@ namespace API_Estatuetas.Repositories.Interfaces
         /// </summary>
         /// <param name="estatueta">Objeto Estatueta atualizado.</param>
         /// <param name="id">ID da estatueta a ser atualizada.</param>
-        Task<Estatueta> UpdateDadosEstatueta(Estatueta estatueta, int id);
+        Task<Estatueta> UpdateDadosEstatueta(int id, string titulo, string descricao, decimal preco);
 
         /// <summary>
         /// Exclui uma estatueta por ID.
@@ -46,6 +46,8 @@ namespace API_Estatuetas.Repositories.Interfaces
         /// <param name="id">ID da estatueta.</param>
         /// <param name="foto">Foto a ser adicionada.</param>
         Task<Estatueta> AdicionarFoto(int id, IFormFile foto);
+
+        Task<string> SalvarImagemLocal(IFormFile foto);
 
         /// <summary>
         /// Exclui uma foto da estatueta especificada.

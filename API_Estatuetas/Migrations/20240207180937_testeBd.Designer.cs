@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace API_Estatuetas.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240207035302_DbEstatuetasTeste")]
-    partial class DbEstatuetasTeste
+    [Migration("20240207180937_testeBd")]
+    partial class testeBd
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

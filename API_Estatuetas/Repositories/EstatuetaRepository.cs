@@ -48,7 +48,7 @@ namespace API_Estatuetas.Repositories
         }
 
         // Atualiza os dados de uma estatueta existente
-        public async Task<Estatueta> UpdateDadosEstatueta(Estatueta estatueta, int id)
+        public async Task<Estatueta> UpdateDadosEstatueta(int id, string titulo, string descricao, decimal preco)
         {
             Estatueta estatuetabyId = await GetEstatuetaById(id);
 
@@ -57,9 +57,9 @@ namespace API_Estatuetas.Repositories
                 throw new Exception($"Estatueta para o Id: {id} não foi encontrado na base de dados.");
             }
 
-            estatuetabyId.Titulo = estatueta.Titulo;
-            estatuetabyId.Descricao = estatueta.Descricao;
-            estatuetabyId.Preco = estatueta.Preco;
+            estatuetabyId.Titulo = titulo;
+            estatuetabyId.Descricao = descricao;
+            estatuetabyId.Preco = preco;
 
             _dbContext.Estatuetas.Update(estatuetabyId);
             await _dbContext.SaveChangesAsync();
@@ -169,11 +169,19 @@ namespace API_Estatuetas.Repositories
         }
 
         // Salva uma imagem no sistema de arquivos local e retorna o nome do arquivo
-        private async Task<string> SalvarImagemLocal(IFormFile foto)
+        public async Task<string> SalvarImagemLocal(IFormFile foto)
         {
             string nomeArquivo = $"{Guid.NewGuid()}_{foto.FileName}";
-            string caminhoArquivo = Path.Combine(_webHostEnvironment.WebRootPath, "imagens", nomeArquivo);
+            string pastaImagens = Path.Combine(_webHostEnvironment.WebRootPath, "imagens");
+            string caminhoArquivo = Path.Combine(pastaImagens, nomeArquivo);
 
+            // Verifica se o diretório "imagens" existe e, se não, cria-o
+            if (!Directory.Exists(pastaImagens))
+            {
+                Directory.CreateDirectory(pastaImagens);
+            }
+
+            // Salva a imagem no diretório
             using (var stream = new FileStream(caminhoArquivo, FileMode.Create))
             {
                 await foto.CopyToAsync(stream);
@@ -181,6 +189,7 @@ namespace API_Estatuetas.Repositories
 
             return nomeArquivo;
         }
+
 
         // Remove uma imagem do sistema de arquivos local
         private void RemoverImagemLocal(string nomeArquivo)

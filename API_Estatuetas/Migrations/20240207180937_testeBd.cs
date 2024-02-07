@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace API_Estatuetas.Migrations
 {
     /// <inheritdoc />
-    public partial class DbEstatuetasTeste : Migration
+    public partial class testeBd : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
