@@ -30,7 +30,6 @@ namespace API_Estatuetas.Data.Map
             builder.HasMany(e => e.ListaFotos)
                 .WithOne(f => f.Estatueta);
            
-            //builder.Navigation(x => x.ListaFotos).UsePropertyAccessMode(PropertyAccessMode.Property);
         }
     }
 }

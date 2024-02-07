@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace API_Estatuetas.Migrations
 {
     /// <inheritdoc />
-    public partial class EstatuetasDb : Migration
+    public partial class DbEstatuetasTeste : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -172,21 +172,21 @@ namespace API_Estatuetas.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Fotografia",
+                name: "Fotografias",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     NomeFicheiro = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Data = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    EstatuetaFK = table.Column<int>(type: "int", nullable: true)
+                    EstatuetaID = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Fotografia", x => x.Id);
+                    table.PrimaryKey("PK_Fotografias", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Fotografia_Estatuetas_EstatuetaFK",
-                        column: x => x.EstatuetaFK,
+                        name: "FK_Fotografias_Estatuetas_EstatuetaID",
+                        column: x => x.EstatuetaID,
                         principalTable: "Estatuetas",
                         principalColumn: "EstatuetaID",
                         onDelete: ReferentialAction.Cascade);
@@ -232,9 +232,9 @@ namespace API_Estatuetas.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Fotografia_EstatuetaFK",
-                table: "Fotografia",
-                column: "EstatuetaFK");
+                name: "IX_Fotografias_EstatuetaID",
+                table: "Fotografias",
+                column: "EstatuetaID");
         }
 
         /// <inheritdoc />
@@ -256,7 +256,7 @@ namespace API_Estatuetas.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "Fotografia");
+                name: "Fotografias");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");

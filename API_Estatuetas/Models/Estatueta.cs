@@ -7,5 +7,11 @@
         public string Descricao { get; set; }
         public decimal Preco { get; set; }
         public ICollection<Fotografia>? ListaFotos { get; set; }
+
+        public Estatueta()
+        {
+            ListaFotos = new List<Fotografia>();
+        }
+
     }
 }

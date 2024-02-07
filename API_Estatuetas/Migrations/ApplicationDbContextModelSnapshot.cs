@@ -59,7 +59,7 @@ namespace API_Estatuetas.Migrations
                     b.Property<DateTime>("Data")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("EstatuetaFK")
+                    b.Property<int>("EstatuetaID")
                         .HasColumnType("int");
 
                     b.Property<string>("NomeFicheiro")
@@ -68,9 +68,9 @@ namespace API_Estatuetas.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("EstatuetaFK");
+                    b.HasIndex("EstatuetaID");
 
-                    b.ToTable("Fotografia");
+                    b.ToTable("Fotografias");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -275,8 +275,9 @@ namespace API_Estatuetas.Migrations
                 {
                     b.HasOne("API_Estatuetas.Models.Estatueta", "Estatueta")
                         .WithMany("ListaFotos")
-                        .HasForeignKey("EstatuetaFK")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .HasForeignKey("EstatuetaID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Estatueta");
                 });

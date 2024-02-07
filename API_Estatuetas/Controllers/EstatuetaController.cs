@@ -1,4 +1,5 @@
-﻿using API_Estatuetas.Models;
+﻿using API_Estatuetas.Dtos;
+using API_Estatuetas.Models;
 using API_Estatuetas.Repositories.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -14,7 +15,6 @@ namespace API_Estatuetas.Controllers
     {
         private readonly IEstatuetaRepository _estatuetaRepository;
 
-        // Injeta o repositório de estatuetas no controlador
         public EstatuetaController(IEstatuetaRepository estatuetaRepository)
         {
             _estatuetaRepository = estatuetaRepository;
@@ -26,14 +26,11 @@ namespace API_Estatuetas.Controllers
         {
             try
             {
-                // Tenta obter todas as estatuetas do repositório
                 List<Estatueta> estatuetas = await _estatuetaRepository.GetAllEstatuetas();
-                // Retorna as estatuetas obtidas com sucesso
                 return Ok(estatuetas);
             }
             catch (Exception ex)
             {
-                // Em caso de erro, retorna um status de erro interno do servidor junto com uma mensagem de erro
                 return StatusCode(StatusCodes.Status500InternalServerError, $"Erro ao obter estatuetas: {ex.Message}");
             }
         }
@@ -44,41 +41,126 @@ namespace API_Estatuetas.Controllers
         {
             try
             {
-                // Tenta obter a estatueta com o ID fornecido do repositório
                 Estatueta estatueta = await _estatuetaRepository.GetEstatuetaById(id);
-                // Se a estatueta não for encontrada, retorna um status de não encontrado
                 if (estatueta == null)
                     return NotFound("Estatueta não encontrada");
-
-                // Retorna a estatueta obtida com sucesso
                 return Ok(estatueta);
             }
             catch (Exception ex)
             {
-                // Em caso de erro, retorna um status de erro interno do servidor junto com uma mensagem de erro
                 return StatusCode(StatusCodes.Status500InternalServerError, $"Erro ao obter estatueta: {ex.Message}");
             }
         }
 
-        // Registra uma nova estatueta
+        // Registra uma nova estatueta com fotos
         [HttpPost]
-        public async Task<ActionResult<Estatueta>> Register([FromForm] Estatueta estatueta, IFormFile imagemEstatueta)
+        public async Task<IActionResult> AdicionarEstatuetaComFotos([FromForm] CriarEstatuetaDto dto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            Estatueta novaEstatueta = new Estatueta
+            {
+                Titulo = dto.Titulo,
+                Descricao = dto.Descricao,
+                Preco = dto.Preco
+            };
+
+            foreach (var foto in dto.Fotos)
+            {
+                novaEstatueta.ListaFotos.Add(new Fotografia
+                {
+                    NomeFicheiro = foto.FileName,
+                    Data = DateTime.Now
+                });
+            }
+
+            await _estatuetaRepository.Add(novaEstatueta);
+
+            return Ok(novaEstatueta);
+        }
+
+        // Adiciona uma nova foto a uma estatueta existente
+        [HttpPost("{idEstatueta}/fotos")]
+        public async Task<IActionResult> AdicionarFoto(int idEstatueta, [FromForm] IFormFile foto)
         {
             try
             {
-                // Verifica se a estatueta ou a imagem não foram fornecidas
-                if (estatueta == null || imagemEstatueta == null)
-                    return BadRequest("Estatueta ou imagem não fornecida");
+                Estatueta estatueta = await _estatuetaRepository.AdicionarFoto(idEstatueta, foto);
 
-                // Adiciona a estatueta com a imagem fornecida ao repositório
-                Estatueta novaEstatueta = await _estatuetaRepository.Add(estatueta, imagemEstatueta);
-                // Retorna um status de criação bem-sucedida juntamente com a nova estatueta criada
-                return CreatedAtAction(nameof(GetEstatuetaById), new { id = novaEstatueta.EstatuetaID }, novaEstatueta);
+                if (estatueta == null)
+                {
+                    return NotFound("Estatueta não encontrada");
+                }
+
+                return Ok(estatueta);
             }
             catch (Exception ex)
             {
-                // Em caso de erro, retorna um status de erro interno do servidor junto com uma mensagem de erro
-                return StatusCode(StatusCodes.Status500InternalServerError, $"Erro ao registrar estatueta: {ex.Message}");
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Erro ao adicionar foto: {ex.Message}");
+            }
+        }
+
+        // Exclui uma foto de uma estatueta
+        [HttpDelete("{idEstatueta}/fotos/{idFoto}")]
+        public async Task<IActionResult> ExcluirFoto(int idEstatueta, int idFoto)
+        {
+            try
+            {
+                bool fotoExcluida = await _estatuetaRepository.ExcluirFoto(idEstatueta, idFoto);
+
+                if (!fotoExcluida)
+                {
+                    return NotFound("Foto não encontrada");
+                }
+
+                return Ok("Foto excluída com sucesso");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Erro ao excluir foto: {ex.Message}");
+            }
+        }
+
+        // Atualiza os dados de uma estatueta existente
+        [HttpPut("{id}")]
+        public async Task<IActionResult> AtualizarEstatueta(int id, [FromBody] Estatueta estatueta)
+        {
+            try
+            {
+                Estatueta estatuetaAtualizada = await _estatuetaRepository.UpdateDadosEstatueta(estatueta, id);
+                if (estatuetaAtualizada == null)
+                {
+                    return NotFound("Estatueta não encontrada");
+                }
+                return Ok(estatuetaAtualizada);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Erro ao atualizar estatueta: {ex.Message}");
+            }
+        }
+
+        // Exclui uma estatueta por ID
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> ExcluirEstatueta(int id)
+        {
+            try
+            {
+                bool estatuetaExcluida = await _estatuetaRepository.DeleteEstatueta(id);
+
+                if (!estatuetaExcluida)
+                {
+                    return NotFound("Estatueta não encontrada");
+                }
+
+                return Ok("Estatueta excluída com sucesso");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Erro ao excluir estatueta: {ex.Message}");
             }
         }
     }

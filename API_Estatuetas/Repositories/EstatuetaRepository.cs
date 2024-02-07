@@ -22,67 +22,33 @@ namespace API_Estatuetas.Repositories
             _webHostEnvironment = webHostEnvironment;
         }
 
+        // Obtém todas as estatuetas
         public async Task<List<Estatueta>> GetAllEstatuetas()
         {
-            return await _dbContext.Estatuetas.ToListAsync();
+            return await _dbContext.Estatuetas
+                         .Include(e => e.ListaFotos)
+                         .ToListAsync();
         }
 
+        // Obtém uma estatueta por ID
         public async Task<Estatueta> GetEstatuetaById(int id)
         {
-            return await _dbContext.Estatuetas.FirstOrDefaultAsync(x => x.EstatuetaID == id);
+            return await _dbContext.Estatuetas
+                        .Include(e => e.ListaFotos)
+                        .FirstOrDefaultAsync(e => e.EstatuetaID == id);
         }
-        public async Task<Estatueta> Add(Estatueta estatueta, IFormFile imagemEstatueta)
+
+        // Adiciona uma nova estatueta
+        public async Task<Estatueta> Add(Estatueta estatueta)
         {
-            //variáveis auxiliares
-            string nomeFoto = "";
-            bool existeFoto = false;
-
-            if (imagemEstatueta.ContentType != "image/jpg" &&
-                    imagemEstatueta.ContentType != "image/png" && imagemEstatueta.ContentType != "image/jpeg")
-            {
-                estatueta.ListaFotos
-                    .Add(new Fotografia
-                    {
-                        Data = DateTime.Now,
-                        NomeFicheiro = "ImagemDefaultEstatueta.jpeg"
-                    });
-            }
-            else
-            {
-                Guid g = Guid.NewGuid();
-                nomeFoto = g.ToString();
-                string extensaoNomeFoto = Path.GetExtension(imagemEstatueta.FileName).ToLower();
-                nomeFoto += extensaoNomeFoto;
-
-                estatueta.ListaFotos
-                        .Add(new Fotografia
-                        {
-                            Data = DateTime.Now,
-                            NomeFicheiro = nomeFoto
-                        });
-                existeFoto = true;
-            }
-
             _dbContext.Estatuetas.Add(estatueta);
             await _dbContext.SaveChangesAsync();
-                if (existeFoto)
-                {
-                    string nomeLocalizacaoImagem = Path.Combine(_webHostEnvironment.WebRootPath, "imagens");
-
-                    if (!Directory.Exists(nomeLocalizacaoImagem))
-                    {
-                        Directory.CreateDirectory(nomeLocalizacaoImagem);
-                    }
-
-                    string nomeDoFicheiro = Path.Combine(nomeLocalizacaoImagem, nomeFoto);
-
-                    using var stream = new FileStream(nomeDoFicheiro, FileMode.Create);
-                    await imagemEstatueta.CopyToAsync(stream);
-                }
 
             return estatueta;
         }
-        public async Task<Estatueta> Update(Estatueta estatueta, int id, List<IFormFile> novasImagens = null)
+
+        // Atualiza os dados de uma estatueta existente
+        public async Task<Estatueta> UpdateDadosEstatueta(Estatueta estatueta, int id)
         {
             Estatueta estatuetabyId = await GetEstatuetaById(id);
 
@@ -95,43 +61,94 @@ namespace API_Estatuetas.Repositories
             estatuetabyId.Descricao = estatueta.Descricao;
             estatuetabyId.Preco = estatueta.Preco;
 
-            // Atualiza as imagens
-            AtualizarImagens(estatuetabyId, novasImagens);
-
             _dbContext.Estatuetas.Update(estatuetabyId);
             await _dbContext.SaveChangesAsync();
 
             return estatuetabyId;
         }
 
-        private void AtualizarImagens(Estatueta estatueta, List<IFormFile> novasImagens)
+        // Adiciona uma nova foto a uma estatueta existente
+        public async Task<Estatueta> AdicionarFoto(int idEstatueta, IFormFile foto)
         {
-            if (novasImagens != null && novasImagens.Any())
+            // Obtém a estatueta pelo ID fornecido
+            Estatueta estatueta = await _dbContext.Estatuetas.Include(e => e.ListaFotos)
+                                                             .FirstOrDefaultAsync(e => e.EstatuetaID == idEstatueta);
+
+            if (estatueta == null)
             {
-                // Remove imagens existentes associadas à estatueta
-                RemoverImagensLocais(estatueta);
-
-                estatueta.ListaFotos = new List<Fotografia>();
-
-                foreach (var novaImagem in novasImagens)
-                {
-                    Guid g = Guid.NewGuid();
-                    string nomeFoto = g.ToString();
-                    string extensaoNomeFoto = Path.GetExtension(novaImagem.FileName).ToLower();
-                    nomeFoto += extensaoNomeFoto;
-
-                    estatueta.ListaFotos.Add(new Fotografia
-                    {
-                        Data = DateTime.Now,
-                        NomeFicheiro = nomeFoto
-                    });
-
-                    // Salva a nova imagem no sistema de arquivos local
-                    SalvarImagemLocal(nomeFoto, novaImagem);
-                }
+                // Retorna nulo se a estatueta não for encontrada
+                return null;
             }
+
+            // Adiciona a nova foto à estatueta
+            string nomeFoto = await SalvarImagemLocal(foto);
+
+            estatueta.ListaFotos.Add(new Fotografia
+            {
+                NomeFicheiro = nomeFoto,
+                Data = DateTime.Now
+            });
+
+            // Salva as alterações no banco de dados
+            await _dbContext.SaveChangesAsync();
+
+            return estatueta;
         }
 
+        // Exclui uma foto de uma estatueta
+        public async Task<bool> ExcluirFoto(int idEstatueta, int idFoto)
+        {
+            // Obtém a estatueta pelo ID fornecido
+            Estatueta estatueta = await _dbContext.Estatuetas.Include(e => e.ListaFotos)
+                                                             .FirstOrDefaultAsync(e => e.EstatuetaID == idEstatueta);
+
+            if (estatueta == null)
+            {
+                // Retorna falso se a estatueta não for encontrada
+                return false;
+            }
+
+            // Obtém a foto pelo ID fornecido
+            Fotografia foto = estatueta.ListaFotos.FirstOrDefault(f => f.Id == idFoto);
+
+            if (foto == null)
+            {
+                // Retorna falso se a foto não for encontrada
+                return false;
+            }
+
+            // Remove a foto da lista de fotos da estatueta
+            estatueta.ListaFotos.Remove(foto);
+
+            // Remove a foto do sistema de arquivos local
+            RemoverImagemLocal(foto.NomeFicheiro);
+
+            // Salva as alterações no banco de dados
+            await _dbContext.SaveChangesAsync();
+
+            return true;
+        }
+
+        // Deleta uma estatueta e suas fotos associadas
+        public async Task<bool> DeleteEstatueta(int id)
+        {
+            Estatueta estatuetabyId = await GetEstatuetaById(id);
+
+            if (estatuetabyId == null)
+            {
+                throw new Exception($"Estatueta para o Id: {id} não foi encontrado na base de dados.");
+            }
+
+            // Remover imagens associadas à estatueta do sistema de arquivos local
+            RemoverImagensLocais(estatuetabyId);
+
+            _dbContext.Estatuetas.Remove(estatuetabyId);
+            await _dbContext.SaveChangesAsync();
+
+            return true;
+        }
+
+        // Remove imagens associadas à estatueta do sistema de arquivos local
         private void RemoverImagensLocais(Estatueta estatueta)
         {
             if (estatueta.ListaFotos != null && estatueta.ListaFotos.Any())
@@ -151,53 +168,28 @@ namespace API_Estatuetas.Repositories
             }
         }
 
-        private void SalvarImagemLocal(string nomeFoto, IFormFile novaImagem)
+        // Salva uma imagem no sistema de arquivos local e retorna o nome do arquivo
+        private async Task<string> SalvarImagemLocal(IFormFile foto)
         {
-            string nomeLocalizacaoImagem = Path.Combine(_webHostEnvironment.WebRootPath, "imagens");
+            string nomeArquivo = $"{Guid.NewGuid()}_{foto.FileName}";
+            string caminhoArquivo = Path.Combine(_webHostEnvironment.WebRootPath, "imagens", nomeArquivo);
 
-            if (!Directory.Exists(nomeLocalizacaoImagem))
+            using (var stream = new FileStream(caminhoArquivo, FileMode.Create))
             {
-                Directory.CreateDirectory(nomeLocalizacaoImagem);
+                await foto.CopyToAsync(stream);
             }
 
-            string nomeDoFicheiro = Path.Combine(nomeLocalizacaoImagem, nomeFoto);
-
-            using var stream = new FileStream(nomeDoFicheiro, FileMode.Create);
-            novaImagem.CopyTo(stream);
+            return nomeArquivo;
         }
 
-        public async Task<bool> Delete(int id)
+        // Remove uma imagem do sistema de arquivos local
+        private void RemoverImagemLocal(string nomeArquivo)
         {
-            Estatueta estatuetabyId = await GetEstatuetaById(id);
+            string caminhoArquivo = Path.Combine(_webHostEnvironment.WebRootPath, "imagens", nomeArquivo);
 
-            if (estatuetabyId == null)
+            if (File.Exists(caminhoArquivo))
             {
-                throw new Exception($"Estatueta para o Id: {id} não foi encontrado na base de dados.");
-            }
-
-            // Remova a imagem associada à estatueta do sistema de arquivos local
-            RemoverImagemLocal(estatuetabyId);
-
-            _dbContext.Estatuetas.Remove(estatuetabyId);
-            await _dbContext.SaveChangesAsync();
-
-            return true;
-        }
-
-        private void RemoverImagemLocal(Estatueta estatueta)
-        {
-            if (estatueta.ListaFotos != null && estatueta.ListaFotos.Any())
-            {
-                foreach (var foto in estatueta.ListaFotos)
-                {
-                    string nomeLocalizacaoImagem = Path.Combine(_webHostEnvironment.WebRootPath, "imagens");
-                    string nomeDoFicheiro = Path.Combine(nomeLocalizacaoImagem, foto.NomeFicheiro);
-
-                    if (File.Exists(nomeDoFicheiro))
-                    {
-                        File.Delete(nomeDoFicheiro);
-                    }
-                }
+                File.Delete(caminhoArquivo);
             }
         }
     }

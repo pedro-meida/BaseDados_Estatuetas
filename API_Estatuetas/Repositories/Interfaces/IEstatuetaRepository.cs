@@ -25,21 +25,33 @@ namespace API_Estatuetas.Repositories.Interfaces
         /// Adiciona uma nova estatueta.
         /// </summary>
         /// <param name="estatueta">Objeto Estatueta a ser adicionado.</param>
-        /// <param name="imagemEstatueta">Imagem associada à estatueta.</param>
-        Task<Estatueta> Add(Estatueta estatueta, IFormFile imagemEstatueta);
+        Task<Estatueta> Add(Estatueta estatueta);
 
         /// <summary>
         /// Atualiza uma estatueta existente.
         /// </summary>
         /// <param name="estatueta">Objeto Estatueta atualizado.</param>
         /// <param name="id">ID da estatueta a ser atualizada.</param>
-        /// <param name="novaImagem">Nova imagem associada à estatueta (opcional).</param>
-        Task<Estatueta> Update(Estatueta estatueta, int id, IFormFile? novaImagem = null);
+        Task<Estatueta> UpdateDadosEstatueta(Estatueta estatueta, int id);
 
         /// <summary>
         /// Exclui uma estatueta por ID.
         /// </summary>
         /// <param name="id">ID da estatueta a ser excluída.</param>
-        Task<bool> Delete(int id);
+        Task<bool> DeleteEstatueta(int id);
+
+        /// <summary>
+        /// Adiciona uma nova foto à estatueta especificada.
+        /// </summary>
+        /// <param name="id">ID da estatueta.</param>
+        /// <param name="foto">Foto a ser adicionada.</param>
+        Task<Estatueta> AdicionarFoto(int id, IFormFile foto);
+
+        /// <summary>
+        /// Exclui uma foto da estatueta especificada.
+        /// </summary>
+        /// <param name="id">ID da estatueta.</param>
+        /// <param name="fotoId">ID da foto a ser excluída.</param>
+        Task<bool> ExcluirFoto(int id, int fotoId);
     }
 }
