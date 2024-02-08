@@ -28,6 +28,11 @@ namespace API_Estatuetas.Data
         public DbSet<Estatueta> Estatuetas { get; set; }
 
         /// <summary>
+        /// Conjunto de dados para a entidade Categoria.
+        /// </summary>
+        public DbSet<Categoria> Categorias { get; set; }
+
+        /// <summary>
         /// Conjunto de dados para a entidade Fotografia.
         /// </summary>
         public DbSet<Fotografia> Fotografias { get; set; }

@@ -13,7 +13,7 @@ namespace API_Estatuetas.Data.Map
 
             // Configuração do título
             builder.Property(x => x.Titulo)
-                .HasMaxLength(70)
+                .HasMaxLength(100)
                 .IsRequired();
 
             // Configuração da descrição
@@ -26,10 +26,14 @@ namespace API_Estatuetas.Data.Map
                 .HasColumnType("decimal(18,2)")
                 .IsRequired();
 
+            // Configuração da relação muitos-para-muitos com Categoria
+            builder
+                .HasMany(e => e.Categorias)
+                .WithMany(c => c.Estatuetas);
+
             // Configuração da relação com ListaFotos
             builder.HasMany(e => e.ListaFotos)
                 .WithOne(f => f.Estatueta);
-           
         }
     }
 }

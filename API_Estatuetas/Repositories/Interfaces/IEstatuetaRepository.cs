@@ -28,11 +28,20 @@ namespace API_Estatuetas.Repositories.Interfaces
         Task<Estatueta> Add(Estatueta estatueta);
 
         /// <summary>
-        /// Atualiza uma estatueta existente.
+        /// Atualiza o título, descrição e preço de uma estatueta existente.
         /// </summary>
-        /// <param name="estatueta">Objeto Estatueta atualizado.</param>
         /// <param name="id">ID da estatueta a ser atualizada.</param>
+        /// <param name="titulo">Titulo da estatueta a ser atualizada</param>
+        /// <param name="descricao">Descrição da estatueta a ser atualizada</param>
+        /// <param name="preco">Preço da estatueta a ser atualizada</param>
         Task<Estatueta> UpdateDadosEstatueta(int id, string titulo, string descricao, decimal preco);
+
+        /// <summary>
+        /// Atualiza uma estatueta depois de se desassociar uma categoria.
+        /// </summary>
+        /// <param name="idEstatueta">ID da estatueta a ser atualizada.</param>
+        /// <param name="categoriaIdARemover">ID da categoria a ser desassociada à estatueta.</param>
+        Task<Estatueta> UpdateEstatuetaCategoria(int idEstatueta, int categoriaIdARemover);
 
         /// <summary>
         /// Exclui uma estatueta por ID.

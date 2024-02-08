@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace API_Estatuetas.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240207180937_testeBd")]
-    partial class testeBd
+    [Migration("20240208063618_BdtesteEstatuetas")]
+    partial class BdtesteEstatuetas
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,6 +24,23 @@ namespace API_Estatuetas.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("API_Estatuetas.Models.Categoria", b =>
+                {
+                    b.Property<int>("CategoriaId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CategoriaId"));
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("CategoriaId");
+
+                    b.ToTable("Categorias");
+                });
 
             modelBuilder.Entity("API_Estatuetas.Models.Estatueta", b =>
                 {
@@ -43,8 +60,8 @@ namespace API_Estatuetas.Migrations
 
                     b.Property<string>("Titulo")
                         .IsRequired()
-                        .HasMaxLength(70)
-                        .HasColumnType("nvarchar(70)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("EstatuetaID");
 
@@ -74,6 +91,21 @@ namespace API_Estatuetas.Migrations
                     b.HasIndex("EstatuetaID");
 
                     b.ToTable("Fotografias");
+                });
+
+            modelBuilder.Entity("CategoriaEstatueta", b =>
+                {
+                    b.Property<int>("CategoriasCategoriaId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("EstatuetasEstatuetaID")
+                        .HasColumnType("int");
+
+                    b.HasKey("CategoriasCategoriaId", "EstatuetasEstatuetaID");
+
+                    b.HasIndex("EstatuetasEstatuetaID");
+
+                    b.ToTable("CategoriaEstatueta");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -283,6 +315,21 @@ namespace API_Estatuetas.Migrations
                         .IsRequired();
 
                     b.Navigation("Estatueta");
+                });
+
+            modelBuilder.Entity("CategoriaEstatueta", b =>
+                {
+                    b.HasOne("API_Estatuetas.Models.Categoria", null)
+                        .WithMany()
+                        .HasForeignKey("CategoriasCategoriaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("API_Estatuetas.Models.Estatueta", null)
+                        .WithMany()
+                        .HasForeignKey("EstatuetasEstatuetaID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace API_Estatuetas.Migrations
 {
     /// <inheritdoc />
-    public partial class testeBd : Migration
+    public partial class BdtesteEstatuetas : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -51,12 +51,25 @@ namespace API_Estatuetas.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Categorias",
+                columns: table => new
+                {
+                    CategoriaId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Nome = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Categorias", x => x.CategoriaId);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Estatuetas",
                 columns: table => new
                 {
                     EstatuetaID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Titulo = table.Column<string>(type: "nvarchar(70)", maxLength: 70, nullable: false),
+                    Titulo = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Descricao = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
                     Preco = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
                 },
@@ -172,6 +185,30 @@ namespace API_Estatuetas.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "CategoriaEstatueta",
+                columns: table => new
+                {
+                    CategoriasCategoriaId = table.Column<int>(type: "int", nullable: false),
+                    EstatuetasEstatuetaID = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CategoriaEstatueta", x => new { x.CategoriasCategoriaId, x.EstatuetasEstatuetaID });
+                    table.ForeignKey(
+                        name: "FK_CategoriaEstatueta_Categorias_CategoriasCategoriaId",
+                        column: x => x.CategoriasCategoriaId,
+                        principalTable: "Categorias",
+                        principalColumn: "CategoriaId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_CategoriaEstatueta_Estatuetas_EstatuetasEstatuetaID",
+                        column: x => x.EstatuetasEstatuetaID,
+                        principalTable: "Estatuetas",
+                        principalColumn: "EstatuetaID",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Fotografias",
                 columns: table => new
                 {
@@ -232,6 +269,11 @@ namespace API_Estatuetas.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
+                name: "IX_CategoriaEstatueta_EstatuetasEstatuetaID",
+                table: "CategoriaEstatueta",
+                column: "EstatuetasEstatuetaID");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Fotografias_EstatuetaID",
                 table: "Fotografias",
                 column: "EstatuetaID");
@@ -256,6 +298,9 @@ namespace API_Estatuetas.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
+                name: "CategoriaEstatueta");
+
+            migrationBuilder.DropTable(
                 name: "Fotografias");
 
             migrationBuilder.DropTable(
@@ -263,6 +308,9 @@ namespace API_Estatuetas.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
+
+            migrationBuilder.DropTable(
+                name: "Categorias");
 
             migrationBuilder.DropTable(
                 name: "Estatuetas");

@@ -27,6 +27,7 @@ namespace API_Estatuetas.Repositories
         {
             return await _dbContext.Estatuetas
                          .Include(e => e.ListaFotos)
+                         .Include(e => e.Categorias)  // Inclui as categorias associadas
                          .ToListAsync();
         }
 
@@ -35,8 +36,10 @@ namespace API_Estatuetas.Repositories
         {
             return await _dbContext.Estatuetas
                         .Include(e => e.ListaFotos)
+                        .Include(e => e.Categorias)  // Inclui as categorias associadas
                         .FirstOrDefaultAsync(e => e.EstatuetaID == id);
         }
+
 
         // Adiciona uma nova estatueta
         public async Task<Estatueta> Add(Estatueta estatueta)
@@ -63,6 +66,39 @@ namespace API_Estatuetas.Repositories
 
             _dbContext.Estatuetas.Update(estatuetabyId);
             await _dbContext.SaveChangesAsync();
+
+            return estatuetabyId;
+        }
+
+        // Atualiza a categoria de uma estatueta existente
+        public async Task<Estatueta> UpdateEstatuetaCategoria(int idEstatueta, int categoriaIdARemover)
+        {
+            Estatueta estatuetabyId = await GetEstatuetaById(idEstatueta);
+
+            if (estatuetabyId == null)
+            {
+                throw new Exception($"Estatueta para o Id: {idEstatueta} não foi encontrado na base de dados.");
+            }
+
+            // Remove a categoria especificada
+            Categoria categoriaToRemove = estatuetabyId.Categorias.FirstOrDefault(c => c.CategoriaId == categoriaIdARemover);
+            if (categoriaToRemove != null)
+            {
+                estatuetabyId.Categorias.Remove(categoriaToRemove);
+            }
+
+            // Atualiza a estatueta no banco de dados
+            _dbContext.Estatuetas.Update(estatuetabyId);
+            await _dbContext.SaveChangesAsync();
+
+            // Verifica se a categoria não está mais associada a nenhuma estatueta
+            Categoria categoria = await _dbContext.Categorias.Include(c => c.Estatuetas).FirstOrDefaultAsync(c => c.CategoriaId == categoriaIdARemover);
+            if (categoria != null && categoria.Estatuetas.Count == 0)
+            {
+                // Remove a categoria do banco de dados se não estiver mais associada a nenhuma estatueta
+                _dbContext.Categorias.Remove(categoria);
+                await _dbContext.SaveChangesAsync();
+            }
 
             return estatuetabyId;
         }
@@ -129,7 +165,7 @@ namespace API_Estatuetas.Repositories
             return true;
         }
 
-        // Deleta uma estatueta e suas fotos associadas
+        // Deleta uma estatueta, suas fotos associadas e a categoria se não estiver associada a mais nenhuma estatueta
         public async Task<bool> DeleteEstatueta(int id)
         {
             Estatueta estatuetabyId = await GetEstatuetaById(id);
@@ -143,10 +179,28 @@ namespace API_Estatuetas.Repositories
             RemoverImagensLocais(estatuetabyId);
 
             _dbContext.Estatuetas.Remove(estatuetabyId);
+
+            // Salva as categorias associadas à estatueta antes de removê-las
+            var categoriasParaRemover = estatuetabyId.Categorias.ToList();
+
+            await _dbContext.SaveChangesAsync();
+
+            // Verifica se cada categoria está associada a mais estatuetas além da que foi excluída
+            foreach (var categoria in categoriasParaRemover)
+            {
+                bool categoriaTemOutrasEstatuetas = _dbContext.Estatuetas.Any(e => e.Categorias.Any(c => c.CategoriaId == categoria.CategoriaId && e.EstatuetaID != id));
+                if (!categoriaTemOutrasEstatuetas)
+                {
+                    // Se a categoria não estiver associada a mais nenhuma estatueta, exclua-a
+                    _dbContext.Categorias.Remove(categoria);
+                }
+            }
+
             await _dbContext.SaveChangesAsync();
 
             return true;
         }
+
 
         // Remove imagens associadas à estatueta do sistema de arquivos local
         private void RemoverImagensLocais(Estatueta estatueta)
